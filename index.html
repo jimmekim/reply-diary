@@ -30,7 +30,7 @@
         <div id="screenHome" class="screen active">
             <header class="home-header">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h1>내 일기장 📚</h1>
+                    <h1>내 일기장 📚 <span style="font-size: 14px; color: #ffeb3b; background: #000; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">🚀 Antigravity 연동 완료!</span></h1>
                     <div class="header-profile-group">
                         <div id="headerAvatar" class="header-avatar" title="프로필 사진 변경">
                             <span id="headerAvatarInitial">?</span>
@@ -82,24 +82,7 @@
         <div class="editor-postcard">
             <button id="btnCancel" class="btn-close">✕</button>
 
-            <!-- Topic Selector -->
-            <div class="postcard-topic-wrap">
-                <div class="topic-label">오늘의 주제</div>
-                <div class="topic-selector">
-                    <select id="topicSelect" class="topic-select">
-                        <option value="preset">프리셋 주제 고르기</option>
-                        <option value="free">✏️ 자유 주제로 쓰기</option>
-                    </select>
-                    <button id="btnShuffleTopic" class="btn-shuffle">🎲 랜덤</button>
-                </div>
-                <div id="topicPresetBox">
-                    <div id="topicText" class="topic-display">요즘 나의 최대 관심사/목표는?</div>
-                </div>
-                <div id="topicFreeBox" class="hidden">
-                    <input id="topicFreeInput" class="topic-free-input" type="text" placeholder="자유 주제를 입력하세요..."
-                        maxlength="40">
-                </div>
-            </div>
+
 
             <!-- Notebook workspace -->
             <div id="editorWorkspace" class="editor-workspace">

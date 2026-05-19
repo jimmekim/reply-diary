@@ -1,15 +1,4 @@
 /* ═══════════════════════════════ PRESET DATA ════════════════════════════════ */
-const presetTopics = [
-    "요즘 나의 최대 관심사/목표는?",
-    "최근 제일 어이없게 웃겼던 썰 ㅋㅋ",
-    "요즘 무한 반복하는 노래는?",
-    "나의 은밀한 비밀 하나 고백 🤫",
-    "요즘 자꾸 생각나는 음식은?",
-    "우리가 처음 만난 날 기억해?",
-    "10년 뒤 나는 어디에 있을까?",
-    "요즘 제일 도파민 나오는 것?"
-];
-
 const mockAIDoodles = [
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%231a1a1a' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'><path d='M20 15 L70 15 L70 85 L20 85 Z'/><path d='M30 15 L30 85'/><path d='M45 40 L60 40'/><path d='M45 55 L60 55'/></svg>",
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%231a1a1a' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'><circle cx='50' cy='55' r='30'/><path d='M25 40 L20 15 L40 30'/><path d='M75 40 L80 15 L60 30'/><circle cx='40' cy='50' r='4' fill='%231a1a1a'/><circle cx='60' cy='50' r='4' fill='%231a1a1a'/><path d='M45 60 L50 63 L55 60'/></svg>",
@@ -57,11 +46,6 @@ const editorScreen = document.getElementById('editorScreen');
 const publishScreen = document.getElementById('publishScreen');
 const canvasPopup = document.getElementById('canvasPopup');
 const workspace = document.getElementById('editorWorkspace');
-const topicSelect = document.getElementById('topicSelect');
-const topicText = document.getElementById('topicText');
-const topicPresetBox = document.getElementById('topicPresetBox');
-const topicFreeBox = document.getElementById('topicFreeBox');
-const topicFreeInput = document.getElementById('topicFreeInput');
 const stickerSlider = document.getElementById('stickerSlider');
 const stickerSizeRow = document.getElementById('stickerSizeRow');
 
@@ -228,7 +212,7 @@ document.getElementById('btnCreateRoom').addEventListener('click', async () => {
         maxSlots,
         createdAt: Date.now(),
         creatorId: currentUserId,
-        pages: [{ q: presetTopics[0], slots: {} }]
+        pages: [{ slots: {} }]
     };
 
     try {
@@ -276,7 +260,7 @@ function renderRoomUI() {
     if (pageIdx >= pages.length) pageIdx = pages.length - 1;
     currentViewPageIdx[activeRoomId] = pageIdx;
 
-    const page = pages[pageIdx] || { q: '', slots: {} };
+    const page = pages[pageIdx] || { slots: {} };
     const isLatest = (pageIdx === pages.length - 1);
     const slots = fbToArray(page.slots, room.maxSlots);
     const filled = slots.filter(Boolean).length;
@@ -306,7 +290,6 @@ function renderRoomUI() {
             div.innerHTML = `<div class="empty-placeholder">+</div>`;
             if (isLatest && !userHasWritten) {
                 div.addEventListener('click', () => {
-                    topicText.innerText = page.q || presetTopics[0];
                     openEditor();
                 });
             } else if (isLatest) {
@@ -352,13 +335,12 @@ function buildSlotHTML(slot, stickersOnly = false) {
         return `${stickersHTML}${lockHTML}${hintHTML}`;
     }
 
-    const qHTML = slot.q ? `<div class="entry-q">${slot.q}</div>` : '';
     const authorRowHTML = `
         <div class="entry-author-row">
             <div class="slot-avatar">${avatarHTML}</div>
             <span class="entry-author">— ${slot.author}</span>
         </div>`;
-    return `<div class="content-wrap">${qHTML}<div class="entry-a">${slot.a}</div>${authorRowHTML}</div>${stickersHTML}`;
+    return `<div class="content-wrap"><div class="entry-a">${slot.a}</div>${authorRowHTML}</div>${stickersHTML}`;
 }
 
 /* ═══════════════════════════════ ROOM NAVIGATION ════════════════════════════════ */
@@ -390,12 +372,9 @@ document.getElementById('btnPoke').addEventListener('click', () =>
 
 document.getElementById('btnCreateNextPage').addEventListener('click', async () => {
     const pages = fbPagesToArr(currentRoomData.pages);
-    const randQ = presetTopics[Math.floor(Math.random() * presetTopics.length)];
-    const newQ = prompt("다음 장의 주제는?", randQ);
-    if (newQ === null) return;
     try {
         await db.ref(`rooms/${activeRoomId}/pages/${pages.length}`).set({
-            q: newQ || randQ, slots: {}
+            slots: {}
         });
         currentViewPageIdx[activeRoomId] = pages.length;
     } catch (err) {
@@ -442,33 +421,6 @@ document.getElementById('btnChangeName').addEventListener('click', () => {
     }
 });
 
-/* ═══════════════════════════════ TOPIC ════════════════════════════════ */
-topicSelect.addEventListener('change', () => {
-    if (topicSelect.value === 'free') {
-        topicPresetBox.classList.add('hidden');
-        topicFreeBox.classList.remove('hidden');
-        topicFreeInput.focus();
-    } else {
-        topicPresetBox.classList.remove('hidden');
-        topicFreeBox.classList.add('hidden');
-    }
-});
-
-document.getElementById('btnShuffleTopic').addEventListener('click', () => {
-    topicSelect.value = 'preset';
-    topicPresetBox.classList.remove('hidden');
-    topicFreeBox.classList.add('hidden');
-    topicText.innerText = presetTopics[Math.floor(Math.random() * presetTopics.length)];
-});
-
-function getCurrentTopic() {
-    if (topicSelect.value === 'free') {
-        const v = topicFreeInput.value.trim();
-        return v || null;
-    }
-    return topicText.innerText;
-}
-
 /* ═══════════════════════════════ EDITOR ════════════════════════════════ */
 btnGlobalWrite.addEventListener('click', openEditor);
 
@@ -476,9 +428,6 @@ function openEditor() {
     document.getElementById('diaryInput').value = '';
     clearAllStickers();
     document.getElementById('aiLoadingOverlay').classList.add('hidden');
-    topicSelect.value = 'preset';
-    topicPresetBox.classList.remove('hidden');
-    topicFreeBox.classList.add('hidden');
     editorScreen.classList.remove('hidden');
 }
 
@@ -705,7 +654,6 @@ document.getElementById('btnConfirmPublish').addEventListener('click', async () 
     if (!selected.length) { alert("방을 하나 이상 선택하세요!"); return; }
 
     const entry = {
-        q: getCurrentTopic(),
         a: document.getElementById('diaryInput').value.trim(),
         authorId: currentUserId,
         author: currentUser,
