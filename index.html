@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>우리의 네컷 일기</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+</head>
+
+<body>
+
+    <svg width="0" height="0" style="position: absolute; z-index: -1;">
+        <filter id="crayon">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </svg>
+
+    <!-- Firebase not configured banner -->
+    <div id="firebaseWarning" class="firebase-warning hidden">
+        ⚠️ Firebase 미설정 — <code>firebase-config.js</code>에 프로젝트 정보를 입력하면 친구들과 실시간으로 쓸 수 있어요!
+    </div>
+
+    <div class="app-container">
+
+        <!-- SCREEN 1: HOME -->
+        <div id="screenHome" class="screen active">
+            <header class="home-header">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h1>내 일기장 📚</h1>
+                    <div class="header-profile-group">
+                        <div id="headerAvatar" class="header-avatar" title="프로필 사진 변경">
+                            <span id="headerAvatarInitial">?</span>
+                            <img id="headerAvatarImg" alt="" style="display:none;">
+                        </div>
+                        <button id="btnChangeName" class="btn-name">닉네임 변경</button>
+                    </div>
+                </div>
+                <p>안녕하세요, <strong id="authorNicknameDisplay"></strong>님! <small class="avatar-hint">↑ 클릭해서 프로필 사진
+                        설정</small></p>
+                <input type="file" id="profilePhotoInput" accept="image/*" style="display:none">
+            </header>
+            <div class="room-list" id="roomListContainer"></div>
+            <button id="btnCreateRoom" class="btn-primary-outline" style="margin: 20px; width: calc(100% - 40px);">+ 새
+                다이어리 방 만들기</button>
+        </div>
+
+        <!-- SCREEN 2: ROOM DETAIL -->
+        <div id="screenRoom" class="screen">
+            <header class="diary-header">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <button id="btnBackToHome" class="btn-icon">← 목록</button>
+                    <button class="btn-invite" id="btnInvite">초대링크 복사 🔗</button>
+                </div>
+                <h1 id="currentRoomTitle">방 제목</h1>
+                <div class="page-nav">
+                    <button id="btnPrevPage" class="btn-nav-arrow">◀ 이전 장</button>
+                    <span id="pageIndicator" class="page-text">1번째 장</span>
+                    <button id="btnNextPage" class="btn-nav-arrow">다음 장 ▶</button>
+                </div>
+                <div class="room-actions-header">
+                    <div class="member-count">참여: <span id="currentRoomCount">0/4</span></div>
+                    <button id="btnPoke" class="btn-poke">👉 찌르기</button>
+                </div>
+            </header>
+            <main class="four-cut-board" id="currentRoomGrid"></main>
+            <div id="nextPageBox" class="next-page-box hidden">
+                <p>🎉 네컷이 모두 채워졌습니다!</p>
+                <button id="btnCreateNextPage" class="btn-submit" style="margin-top:10px; width:100%;">다음 장 열기
+                    📖</button>
+            </div>
+        </div>
+
+        <button class="fab-add hidden" id="btnGlobalWrite">✏️ 일기 쓰기</button>
+    </div>
+
+    <!-- EDITOR MODAL -->
+    <div id="editorScreen" class="editor-overlay hidden">
+        <div class="editor-postcard">
+            <button id="btnCancel" class="btn-close">✕</button>
+
+            <!-- Topic Selector -->
+            <div class="postcard-topic-wrap">
+                <div class="topic-label">오늘의 주제</div>
+                <div class="topic-selector">
+                    <select id="topicSelect" class="topic-select">
+                        <option value="preset">프리셋 주제 고르기</option>
+                        <option value="free">✏️ 자유 주제로 쓰기</option>
+                    </select>
+                    <button id="btnShuffleTopic" class="btn-shuffle">🎲 랜덤</button>
+                </div>
+                <div id="topicPresetBox">
+                    <div id="topicText" class="topic-display">요즘 나의 최대 관심사/목표는?</div>
+                </div>
+                <div id="topicFreeBox" class="hidden">
+                    <input id="topicFreeInput" class="topic-free-input" type="text" placeholder="자유 주제를 입력하세요..."
+                        maxlength="40">
+                </div>
+            </div>
+
+            <!-- Notebook workspace -->
+            <div id="editorWorkspace" class="editor-workspace">
+                <textarea id="diaryInput" placeholder="이곳에 일기를 적어주세요!"></textarea>
+            </div>
+
+            <!-- Sticker toolbar -->
+            <div class="doodle-toolbar">
+                <p class="toolbar-label">스티커 및 사진으로 꾸미기 (자유 이동)</p>
+                <div style="display:flex; gap:8px;">
+                    <button id="btnSpawnAIDoodle" class="btn-tool accent" style="flex:1;">✨ 랜덤</button>
+                    <button id="btnOpenPhotoPicker" class="btn-tool" style="flex:1;">📸 앨범</button>
+                    <button id="btnOpenCanvasPopup" class="btn-tool" style="flex:1;">🖍 손그림</button>
+                </div>
+            </div>
+            <input type="file" id="photoStickerInput" accept="image/*" style="display:none">
+
+            <!-- Size controls -->
+            <div id="stickerSizeRow" class="sticker-size-row hidden">
+                <span>🔍 크기</span>
+                <input type="range" id="stickerSlider" min="0.3" max="3" step="0.05" value="1" style="flex:1;">
+                <button id="btnStickerMinus" class="scale-btn-flat">−</button>
+                <button id="btnStickerPlus" class="scale-btn-flat">+</button>
+                <button id="btnStickerRemove" class="btn-remove-sticker">✕</button>
+            </div>
+
+            <div id="aiLoadingOverlay" class="loading-overlay hidden">
+                <div class="spinner"></div>
+                <p>AI 스케치 생성중...</p>
+            </div>
+
+            <div style="padding: 10px 0 20px;">
+                <button id="btnGoToPublish" class="btn-submit" style="width:100%;">발행할 방 선택하기 ➔</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas Draw Popup -->
+    <div id="canvasPopup" class="editor-overlay hidden" style="z-index:200; align-items:center;">
+        <div class="editor-postcard"
+            style="height:auto; padding:20px; border-radius:16px; background-image:none; max-height:90vh;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="font-size:18px;">손그림 그리기 🖊</h3>
+                <button id="btnCanvasCancel" class="btn-icon" style="margin:0;">✕ 닫기</button>
+            </div>
+            <div
+                style="width:100%; height:320px; overflow:auto; border:2px solid #1a1a1a; border-radius:4px; background:white; cursor:crosshair;">
+                <canvas id="doodleCanvas" width="900" height="900" style="display:block; touch-action:none;"></canvas>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+                <button id="btnCanvasClear" class="btn-tool" style="flex:1;">전체 지우기</button>
+                <button id="btnCanvasDone" class="btn-submit" style="flex:2; margin:0; font-size:15px;">완성! 스티커로
+                    사용</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Publish Modal -->
+    <div id="publishScreen" class="editor-overlay hidden" style="z-index:150; align-items:center;">
+        <div class="editor-postcard" style="height:auto; padding:30px; border-radius:20px; background-image:none;">
+            <button id="btnCancelPublish" class="btn-close" style="top:15px; right:20px; color:#333;">✕</button>
+            <h2 style="font-size:22px; margin-bottom:6px;">어느 방에 올릴까요?</h2>
+            <p style="color:#666; font-size:14px; margin-bottom:4px;">선택한 모든 방에 동시에 발행됩니다.</p>
+            <div id="publishRoomCheckboxList" class="publish-checkbox-list"></div>
+            <button id="btnConfirmPublish" class="btn-submit" style="width:100%; margin-top:20px; margin-bottom:0;">쾅!
+                동시 발행 🐾</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (compat v9) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <!-- Firebase 설정 (본인 config로 교체) -->
+    <script src="firebase-config.js"></script>
+
+    <!-- App -->
+    <script src="app.js"></script>
+</body>
+
+</html>
